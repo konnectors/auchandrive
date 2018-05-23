@@ -93,11 +93,13 @@ async function parseDocuments($) {
   )
   // Need to remove canceled 'Annulée' bills
   bills = bills.filter(bill => bill.status == 'Retirée')
-  // Add html as stream manually for each
+  // Fetching html and make pdf as stream manually for each
   for (let i = 0, len = bills.length; i < len; i++) {
-    bills[i].filestream = await billURLToStream(
-      `${baseUrl}/impression/imprimeanciennecommande/${bills[i].orderNumber}`
-    )
+    const url = `${baseUrl}/impression/imprimeanciennecommande/${
+      bills[i].orderNumber
+    }`
+    const $ = await request(url)
+    bills[i].filestream = await billURLToStream(url, $)
   }
   // Finalize bill objects
   bills = bills.map(function(bill) {
@@ -107,13 +109,13 @@ async function parseDocuments($) {
       (bill.date = bill.date.toDate())
     delete bill.status
     delete bill.rawAmount
-    ;(bill.currency = '€'), (bill.vendor = 'auchandrive')
+    ;(bill.currency = 'EUR'), (bill.vendor = 'auchandrive')
     return bill
   })
   return bills
 }
 
-async function billURLToStream(url) {
+async function billURLToStream(url, $) {
   var doc = new pdf.Document()
   const cell = doc.cell({ paddingBottom: 0.5 * pdf.cm }).text()
   cell.add(
@@ -127,7 +129,6 @@ async function billURLToStream(url) {
     link: url,
     color: '0x0000FF'
   })
-  const $ = await request(url)
   html2pdf($, doc, $('body'), { baseURL: url })
   doc.end()
   return doc
