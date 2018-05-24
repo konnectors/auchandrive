@@ -137,7 +137,10 @@ function scrapeDetails($) {
     },
     'div[class="liste-courses"] table tr:not(:nth-child(1))'
   )
-  log('debug', products)
+  log('debug', `${products.length} products found`)
+  if (products.length > 0) {
+    log('debug', `First is : ${products[0]}`)
+  }
   return products
 }
 
