@@ -70,7 +70,7 @@ async function authenticate(username, password) {
 }
 
 async function parseDocuments($) {
-  let bills = scrape(
+  const rawBills = scrape(
     $,
     {
       orderNumber: 'td:nth-child(1)',
@@ -92,24 +92,19 @@ async function parseDocuments($) {
     'table tr:not(:nth-child(1))'
   )
   // Need to remove canceled 'Annulée' bills
-  bills = bills.filter(bill => bill.status == 'Retirée')
-  // Add html as stream manually for each
-  for (let i = 0, len = bills.length; i < len; i++) {
-    bills[i].filestream = await billURLToStream(
-      `${baseUrl}/impression/imprimeanciennecommande/${bills[i].orderNumber}`
-    )
-  }
-  // Finalize bill objects
-  bills = bills.map(function(bill) {
-    ;(bill.filename = `${bill.date.format('YYYY-MM-DD')}_${bill.rawAmount}_${
-      bill.orderNumber
-    }.pdf`),
-      (bill.date = bill.date.toDate())
-    delete bill.status
-    delete bill.rawAmount
-    ;(bill.currency = '€'), (bill.vendor = 'auchandrive')
-    return bill
-  })
+  const bills = rawBills
+    .filter(bill => bill.status == 'Retirée')
+    .map(async bill => ({
+      filestream: await billURLToStream(
+        `${baseUrl}/impression/imprimeanciennecommande/${bill.orderNumber}`
+      ),
+      filename: `${bill.date.format('YYYY-MM-DD')}_${bill.rawAmount}_${
+        bill.orderNumber
+      }.pdf`,
+      date: bill.date.toDate(),
+      currency: '€',
+      vendor: 'auchandrive'
+    }))
   return bills
 }
 
