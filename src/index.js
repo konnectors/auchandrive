@@ -91,16 +91,18 @@ async function parseDocuments($) {
     },
     'table tr:not(:nth-child(1))'
   )
-  // Need to remove canceled 'Annulée' bills
   const bills = rawBills
     .filter(bill => bill.status == 'Retirée')
     .map(async bill => {
-     const url = `${baseUrl}/impression/imprimeanciennecommande/${
+      const url = `${baseUrl}/impression/imprimeanciennecommande/${
         bill.orderNumber
       }`
       const $ = await request(url)
+      const products = scrapeDetails($)
       const filestream = await billURLToStream(url, $)
       return {
+        amount: bill.amount,
+        products: products,
         filestream: filestream,
         filename: `${bill.date.format('YYYY-MM-DD')}_${bill.rawAmount}_${
           bill.orderNumber
@@ -111,6 +113,32 @@ async function parseDocuments($) {
       }
     })
   return bills
+}
+
+function scrapeDetails($) {
+  const products = scrape(
+    $,
+    {
+      title: {
+        sel: 'td:nth-child(1)'
+      },
+      number: {
+        sel: `td[class='qte']`,
+        parse: number => parseFloat(number)
+      },
+      priceByUnit: {
+        sel: 'td:nth-child(3)',
+        parse: amount => parseFloat(amount.split(' ')[0].replace(',', '.'))
+      },
+      price: {
+        sel: 'td:nth-child(7)',
+        parse: amount => parseFloat(amount.split(' ')[0].replace(',', '.'))
+      }
+    },
+    'div[class="liste-courses"] table tr:not(:nth-child(1))'
+  )
+  log('debug', products)
+  return products
 }
 
 async function billURLToStream(url, $) {
