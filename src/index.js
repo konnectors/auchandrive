@@ -34,7 +34,7 @@ async function start(fields) {
   log('info', `${bills.length} bills has been found`)
   log('info', 'Saving data to Cozy')
   await saveBills(bills, fields.folderPath, {
-    identifiers: ['bills']
+    identifiers: ['AUCHAN']
   })
 }
 
@@ -91,24 +91,60 @@ async function parseDocuments($) {
     },
     'table tr:not(:nth-child(1))'
   )
-  // Need to remove canceled 'Annulée' bills
   const bills = rawBills
     .filter(bill => bill.status == 'Retirée')
-    .map(async bill => ({
-      filestream: await billURLToStream(
-        `${baseUrl}/impression/imprimeanciennecommande/${bill.orderNumber}`
-      ),
-      filename: `${bill.date.format('YYYY-MM-DD')}_${bill.rawAmount}_${
+    .map(async bill => {
+      const url = `${baseUrl}/impression/imprimeanciennecommande/${
         bill.orderNumber
-      }.pdf`,
-      date: bill.date.toDate(),
-      currency: '€',
-      vendor: 'auchandrive'
-    }))
+      }`
+      const $ = await request(url)
+      const products = scrapeDetails($)
+      const filestream = await billURLToStream(url, $)
+      return {
+        amount: bill.amount,
+        products: products,
+        filestream: filestream,
+        filename: `${bill.date.format('YYYY-MM-DD')}_${bill.rawAmount}_${
+          bill.orderNumber
+        }.pdf`,
+        date: bill.date.toDate(),
+        currency: '€',
+        vendor: 'auchandrive'
+      }
+    })
   return bills
 }
 
-async function billURLToStream(url) {
+function scrapeDetails($) {
+  const products = scrape(
+    $,
+    {
+      title: {
+        sel: 'td:nth-child(1)'
+      },
+      number: {
+        sel: `td[class='qte']`,
+        parse: number => parseFloat(number)
+      },
+      priceByUnit: {
+        sel: 'td:nth-child(3)',
+        parse: amount => parseFloat(amount.split(' ')[0].replace(',', '.'))
+      },
+      price: {
+        sel: 'td:nth-child(7)',
+        parse: amount => parseFloat(amount.split(' ')[0].replace(',', '.'))
+      }
+    },
+    'div[class="liste-courses"] table tr:not(:nth-child(1))'
+  )
+  log('debug', `${products.length} products found`)
+  if (products.length > 0) {
+    log('debug', `First is : ${products[0]}`)
+  }
+  return products
+}
+
+async function billURLToStream(url, $) {
   var doc = new pdf.Document()
   const cell = doc.cell({ paddingBottom: 0.5 * pdf.cm }).text()
   cell.add(
@@ -122,7 +158,6 @@ async function billURLToStream(url) {
     link: url,
     color: '0x0000FF'
   })
-  const $ = await request(url)
   html2pdf($, doc, $('body'), { baseURL: url })
   doc.end()
   return doc
