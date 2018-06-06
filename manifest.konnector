@@ -1,12 +1,12 @@
 {
-  "version": "1.0.0",
+  "version": "1.0.1",
   "name": "Auchan Drive",
   "type": "konnector",
   "language": "node",
   "icon": "icon.png",
   "slug": "auchandrive",
   "source": "git://github.com/konnectors/auchandrive.git",
-  "editor": "Cozy",
+  "editor": "Cozy Cloud",
   "vendor_link": "https://auchandrive.fr",
   "categories": ["shopping"],
   "fields": {
