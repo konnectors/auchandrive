@@ -19,7 +19,7 @@ const pdf = require('pdfjs')
 const moment = require('moment')
 moment.locale('fr')
 
-const baseUrl = 'https://auchandrive.fr/drive'
+const baseUrl = 'https://www.auchandrive.fr/drive'
 
 module.exports = new BaseKonnector(start)
 
