@@ -34,7 +34,8 @@ async function start(fields) {
   log('info', `${bills.length} bills has been found`)
   log('info', 'Saving data to Cozy')
   await saveBills(bills, fields.folderPath, {
-    identifiers: ['AUCHAN']
+    identifiers: ['AUCHAN'],
+    contentType: 'application/pdf'
   })
 }
 
