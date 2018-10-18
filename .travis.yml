@@ -1,0 +1,41 @@
+language: node_js
+node_js:
+- '8'
+env:
+  global:
+  - GH_USER_EMAIL="travis@example.org"
+  - GH_USER_NAME="cozy-bot"
+  - DEPLOY_REPOSITORY="git@github.com:konnectors/auchandrive.git"
+  - secure: p9PgzrF+wCtiPNfhgi9zcQz+11HwoOxi2QiokGjJfhuTUei4yfPckyG0MMOh0nfB9NbRzAiHx+ENaVingZ7YZHSAP8miu1W6zCdiYM3lRpGdkD5d3PBuEo57YZaax/eCOFA34bBfpILFHVLsLzMbfYGDXl7KDhJOGXbrDU97pzBicuGXMgixTJ4rVA6LZ6D1tKHo8v+rMSp60a1dWoXiMEh6jSrLxbIW8YOG4KW9YY0zthYkODAxyagu8huL66+OGgkffRqNNBMcYVmq32fRWyWVnDMOxHzYEVcdS5iG5qCJmYfdKJcQ1D/i0KuUew8ysFOrA4l/oK3mjfD17Rf34c/tdieVA1XXSEvB5dauolXiaKuudi++sOa4YaUh98Zg5nOMW9z2a3ZAD2niWktrcfjXnl3Wrt5oWKm3HWLnXpYU2Uh1rl7aP1BKdPqWMJ2DLCgaii458UjGCTBkOgyVZnwHoByv+A+DTOlebzGg36iFoMTlpyjEx2x+/0+nWv7LmKcBK2LC5NaVMgnV44Y5ly34r3T0fZsCRg8UAtOhDKsSxJJCC/Qnmqc31f3pJYGEIKeE7uSJa+2ttnhXz0kcPDPEotC9gen566Sct2OMJ4QawF5qLG8ycqXox9fJ3m4guzLWX60MagaN8+yV59AydX/UyHXdqCKRjmKIf6HPvaI=
+cache:
+  yarn: true
+  directories:
+  - node_modules
+branches:
+  except:
+  - build
+  - build-debug
+script:
+- yarn lint
+- yarn build
+# - yarn run check
+deploy:
+- provider: script
+  skip-cleanup: true
+  script: DEPLOY_BRANCH=build yarn deploy && yarn cozyPublish
+  on:
+    branch: master
+- provider: script
+  skip-cleanup: true
+  script: DEPLOY_BRANCH=build yarn deploy && yarn cozyPublish
+  on:
+    tags: true
+before_install:
+- openssl aes-256-cbc -K $encrypted_1c755fa2a494_key -iv $encrypted_1c755fa2a494_iv
+  -in github_deploy_key.enc -out /tmp/github_deploy_key -d
+- eval "$(ssh-agent -s)"
+- chmod 600 /tmp/github_deploy_key
+- ssh-add /tmp/github_deploy_key
+after_deploy:
+- rm /tmp/github_deploy_key
+- ssh-add -D

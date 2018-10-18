@@ -1,12 +1,12 @@
 {
-  "version": "1.0.1",
+  "version": "1.1.0",
   "name": "Auchan Drive",
   "type": "konnector",
   "language": "node",
   "icon": "icon.png",
   "slug": "auchandrive",
   "source": "git://github.com/konnectors/auchandrive.git",
-  "editor": "Cozy Cloud",
+  "editor": "Cozy",
   "vendor_link": "https://auchandrive.fr",
   "categories": ["shopping"],
   "fields": {
@@ -83,5 +83,7 @@
         }
       }
     }
-  }
+  },
+  "banksTransactionRegExp": "\\bauchan\\b",
+  "manifest_version": "2"
 }
