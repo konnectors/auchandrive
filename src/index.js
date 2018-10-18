@@ -92,27 +92,30 @@ async function parseDocuments($) {
     },
     'table tr:not(:nth-child(1))'
   )
-  const bills = rawBills
-    .filter(bill => bill.status == 'Retirée')
-    .map(async bill => {
-      const url = `${baseUrl}/impression/imprimeanciennecommande/${
+
+  const bills = []
+  for (const bill of rawBills) {
+    if (bill.staus !== 'Retirée') continue
+
+    const url = `${baseUrl}/impression/imprimeanciennecommande/${
+      bill.orderNumber
+    }`
+    const $ = await request(url)
+    const products = scrapeDetails($)
+    const filestream = await billURLToStream(url, $)
+    bills.push({
+      amount: bill.amount,
+      products: products,
+      filestream: filestream,
+      filename: `${bill.date.format('YYYY-MM-DD')}_${bill.rawAmount}_${
         bill.orderNumber
-      }`
-      const $ = await request(url)
-      const products = scrapeDetails($)
-      const filestream = await billURLToStream(url, $)
-      return {
-        amount: bill.amount,
-        products: products,
-        filestream: filestream,
-        filename: `${bill.date.format('YYYY-MM-DD')}_${bill.rawAmount}_${
-          bill.orderNumber
-        }.pdf`,
-        date: bill.date.toDate(),
-        currency: '€',
-        vendor: 'auchandrive'
-      }
+      }.pdf`,
+      date: bill.date.toDate(),
+      currency: '€',
+      vendor: 'auchandrive'
     })
+  }
+
   return bills
 }
 
