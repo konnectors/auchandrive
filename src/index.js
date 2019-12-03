@@ -97,9 +97,7 @@ async function parseDocuments($) {
   for (const bill of rawBills) {
     if (bill.staus !== 'Retirée') continue
 
-    const url = `${baseUrl}/impression/imprimeanciennecommande/${
-      bill.orderNumber
-    }`
+    const url = `${baseUrl}/impression/imprimeanciennecommande/${bill.orderNumber}`
     const $ = await request(url)
     const products = scrapeDetails($)
     const filestream = await billURLToStream(url, $)
